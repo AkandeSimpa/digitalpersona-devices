@@ -1,7 +1,7 @@
 import { Base64Url, Utf8 } from '@digitalpersona/core';
 import { Request, Response } from './command';
 import { MessageType, Message } from './messages';
-import 'WebSdk';
+const WebSdk = typeof window !== "undefined" ? window.WebSdk : null;
 
 /**@internal
  *

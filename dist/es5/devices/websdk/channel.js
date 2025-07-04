@@ -1,17 +1,25 @@
 import { Base64Url, Utf8 } from '@digitalpersona/core';
 import { MessageType } from './messages';
-import 'WebSdk';
-/**@internal
- *
- */
+// Removed: import 'WebSdk';
+
+/**@internal */
 var Channel = /** @class */ (function () {
     function Channel(channelName, options) {
         this.pending = [];
+
+        // 🧙 Lazy grab of WebSdk, runtime-only
+        if (typeof window === "undefined" || !window.WebSdk) {
+            throw new Error("WebSdk is not available. Ensure it's loaded in the browser environment.");
+        }
+
+        const WebSdk = window.WebSdk;
+
         this.webChannel = new WebSdk.WebChannelClient(channelName, options);
         this.webChannel.onConnectionSucceed = this.onConnectionSucceed.bind(this);
         this.webChannel.onConnectionFailed = this.onConnectionFailed.bind(this);
         this.webChannel.onDataReceivedTxt = this.onDataReceivedTxt.bind(this);
     }
+
     Channel.prototype.send = function (request, timeout) {
         var deferred = new Promise(function (resolve, reject) {
             request.resolve = resolve;
@@ -21,30 +29,35 @@ var Channel = /** @class */ (function () {
                     if (request.timer)
                         try {
                             request.reject(new Error("Timeout"));
-                        }
-                        catch (e) { }
+                        } catch (e) { }
                 }, timeout);
             }
         });
+
         this.pending.push(request);
         if (this.webChannel.isConnected())
             this.processRequestQueue();
         else
             this.webChannel.connect();
+
         return deferred;
     };
+
     Channel.prototype.onConnectionSucceed = function () {
         this.processRequestQueue();
     };
+
     Channel.prototype.onConnectionFailed = function () {
-        this.pending.forEach(function (r) { return r.reject(new Error("Communication failure.")); });
+        this.pending.forEach(function (r) {
+            r.reject(new Error("Communication failure."));
+        });
         this.pending = [];
         if (this.onCommunicationError)
             try {
                 this.onCommunicationError();
-            }
-            catch (e) { }
+            } catch (e) { }
     };
+
     Channel.prototype.onDataReceivedTxt = function (data) {
         var message = JSON.parse(Utf8.fromBase64Url(data));
         if (message.Type === MessageType.Response) {
@@ -60,21 +73,20 @@ var Channel = /** @class */ (function () {
                     request.reject(new Error("0x" + hr.toString(16)));
                 else
                     request.resolve(response);
-            }
-            else
+            } else {
                 console.log("Orphaned response: " + message.Type);
-        }
-        else if (message.Type === MessageType.Notification) {
+            }
+        } else if (message.Type === MessageType.Notification) {
             var notification = JSON.parse(Utf8.fromBase64Url(message.Data || ""));
             if (this.onNotification)
                 try {
                     this.onNotification(notification);
-                }
-                catch (e) { }
-        }
-        else
+                } catch (e) { }
+        } else {
             console.log("Unknown message type: " + message.Type);
+        }
     };
+
     Channel.prototype.processRequestQueue = function () {
         var _this = this;
         this.pending.forEach(function (req, i, items) {
@@ -84,6 +96,7 @@ var Channel = /** @class */ (function () {
             }
         });
     };
+
     Channel.prototype.findRequest = function (response) {
         for (var i = 0; i < this.pending.length; i++) {
             var request = this.pending[i];
@@ -94,7 +107,8 @@ var Channel = /** @class */ (function () {
         }
         return null;
     };
+
     return Channel;
 }());
+
 export { Channel };
-//# sourceMappingURL=channel.js.map

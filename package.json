@@ -1,5 +1,5 @@
 {
-  "name": "@digitalpersona/devices",
+  "name": "@altsafe/digitalpersona-devices",
   "globalObject": "dp.devices",
   "version": "0.2.6",
   "repository": {

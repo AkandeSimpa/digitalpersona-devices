@@ -1,6 +1,6 @@
 {
   "name": "@altsafe/digitalpersona-devices",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Updated DigitalPersona Devices SDK with WebSdk-safe runtime loading and modern JS integration",
   "author": {
     "name": "Simpa Akande",
